@@ -1,0 +1,22 @@
+# ignore enviroment files
+.env
+.bash_history
+
+# Ignore bundler config.
+/base/.bundle
+
+# Ignore all logfiles and tempfiles.
+/base/log/*
+/base/tmp/*
+!/base/log/.keep
+!/base/tmp/.keep
+
+# Ignore pidfiles, but keep the directory.
+/base/tmp/pids/*
+!/base/tmp/pids/
+!/base/tmp/pids/.keep
+
+/base/public/assets
+
+# Ignore master key for decrypting credentials and more.
+/base/config/master.key
