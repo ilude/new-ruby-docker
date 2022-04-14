@@ -51,10 +51,12 @@ else {
 
 $rails_base_path = [IO.Path]::Combine($project_path, 'base')
 $build_base_path = [IO.Path]::Combine($project_path, 'build', 'base')
+$vscode_path = [IO.Path]::Combine($project_path, '.vscode')
 
 # create project directory structure
 New-Item -Type Directory -Path $rails_base_path > $null
 New-Item -Type Directory -Path $build_base_path > $null
+New-Item -Type Directory -Path $vscode_path > $null
 
 $uid = $(id -u)
 $gid = $(id -g) 
@@ -70,5 +72,19 @@ Copy-Item -Path './templates/Guardfile' -Destination $rails_base_path
 Copy-Item -Path './templates/dockerignore' -Destination $(Join-path $project_path '.dockerignore')
 Copy-Item -Path './templates/gitignore' -Destination $(Join-path $project_path '.gitignore')
 Copy-Item -Path './templates/email_interceptor.rb' -Destination $(Join-path $rails_base_path 'config' 'initializers')
+Copy-Item -Path './templates/vscode_tasks.json' -Destination $(Join-path $vscode_path 'tasks.json')
+Copy-Item -Path './templates/vscode_launch.json' -Destination $(Join-path $vscode_path 'launch.json')
 
+$current_dir = $(pwd)
+
+cd $project_path
+git init
+git add .
+git commit -m 'initial import'
+
+cd $current_dir
 Write-host "Created project $project_name at $project_path"
+
+if (Get-Command 'code') {
+  code $project_path
+} 

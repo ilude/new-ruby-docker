@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "presentation": {
+    "echo": false,
+    "reveal": "always",
+    "focus": false,
+    "panel": "dedicated",
+    "showReuseMessage": true
+  },
+  "tasks": [
+    {
+      "label": "pwsh",
+      "type": "shell",
+      "command": "",
+      "options": {
+        "shell": {
+          "executable": "pwsh.exe",
+          "args": ["-noLogo"]
+        }
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}

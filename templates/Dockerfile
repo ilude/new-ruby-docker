@@ -15,6 +15,7 @@ RUN apk --no-cache add \
   bash \
   ca-certificates \
   curl \
+  freetds-dev \
   tzdata && \
   ln -snf /etc/localtime /usr/share/zoneinfo/$TZ && echo $TZ > /etc/timezone && \
   addgroup -S $APP_USER && \
