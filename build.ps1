@@ -1,81 +1,74 @@
-@"
-# syntax=docker/dockerfile:1.3-labs # dockerfile heredoc https://www.docker.com/blog/introduction-to-heredocs-in-dockerfiles/
-FROM ruby:alpine
-RUN apk --no-cache add bash build-base freetds-dev git
-RUN gem install rails
-RUN mkdir /app
-WORKDIR /app
+param([Parameter(Position=0)]$project_name)
 
-COPY <<EOF /tmp/options
-  --force 
-  --skip-action-cable 
-  --skip-action-mailbox 
-  --skip-action-text 
-  --skip-active-storage 
-  --skip-bootsnap 
-  --skip-bundle 
-  --skip-git
-  --skip-javascript 
-  --skip-system-test 
-  --skip-test 
-  --skip-turbolinks
-  --asset-pipeline=propshaft
-  --database=sqlserver 
-EOF
-CMD rails new . --rc=/tmp/options 
-"@ > Dockerfile
+Set-StrictMode -Version latest
+$ErrorActionPreference = "Stop"
 
-Remove-Item -recurse -force base
-New-Item -p base 
+function Check-Path {
+	param(
+		[Parameter()] [string] $path
+	)
+  if(Test-Path -path $path) {
+    $confirmation = Read-Host -Prompt "$path already exists, would you like to delete it [y/N]"
+    if ($confirmation -eq 'y') {
+      Remove-Item -LiteralPath $path -Force -Recurse
+    }
+    else{
+      exit 1
+    }
+  }
+}
 
-$env:DOCKER_BUILDKIT=1
-docker build -f builder .
-docker run --rm -it -v ${pwd}/base:/app  --user ${id -u}:${id -g} builder
+if ($project_name -and (Split-Path -Path $project_name)) {
+  $project_path = Resolve-Path -Path $project_name
+  $project_name = Split-Path -Path $project_path -Leaf
+  Check-Path -path $project_path
+}
+elseif($project_name){
+  $project_path = [IO.Path]::Combine('C:\Projects', $project_name)
+  Check-Path -path $project_path 
+}
+else {
+  do {
+    $project_name = $(Read-Host -Prompt 'Enter full path or project name [C:\Projects\<project_name>]').Trim()
+  } 
+  while([string]::IsNullOrEmpty($project_path))
 
-Remove-Item Dockerfile
-New-Item -p build/base
+  # check if this is a path
+  if (Split-Path -Path $project_name)
+  {
+    $project_path = Resolve-Path -Path $project_name
+    $project_name = Split-Path -Path $project_path -Leaf
+    Check-Path -path $project_path 
+  }
+  elseif (Test-Path [IO.Path]::Combine('C:\Projects', $project_name)) {
+    $project_path = [IO.Path]::Combine('C:\Projects', $project_name)
+    Check-Path -path $project_path
+  }
+  else {
+    exit 1
+  }
+}
 
+$rails_base_path = [IO.Path]::Combine($project_path, 'base')
+$build_base_path = [IO.Path]::Combine($project_path, 'build', 'base')
 
+# create project directory structure
+New-Item -Type Directory -Path $rails_base_path > $null
+New-Item -Type Directory -Path $build_base_path > $null
 
-@"
-# Ignore version control files:
-.git/
-.gitignore
-.gitattributes
+$uid = $(id -u)
+$gid = $(id -g) 
 
-# Ignore docker and environment files:
-Dockerfile*
-docker-compose*.yml
-.dockerignore
-.env
-.drone.yml
-README.*
-Makefile
-"@ > .dockerignore
+docker build -t rails-project-builder ./rails-builder-image/
+docker run --rm -it -v ${rails_base_path}:/app  --user ${uid}:${gid} rails-project-builder
 
-@"
-# ignore enviroment files
-.env
-.bash_history
+Copy-Item -Path './templates/Makefile' -Destination $project_path
+Copy-Item -Path './templates/Dockerfile' -Destination $project_path
+Copy-Item -Path './templates/docker-compose.*' -Destination $project_path
+Copy-Item -Path './templates/docker-entrypoint.sh' -Destination $build_base_path
+Copy-Item -Path './templates/Guardfile' -Destination $rails_base_path
+Copy-Item -Path './templates/dockerignore' -Destination $(Join-path $project_path '.dockerignore')
+Copy-Item -Path './templates/gitignore' -Destination $(Join-path $project_path '.gitignore')
+Copy-Item -Path './templates/email_interceptor.rb' -Destination $(Join-path $rails_base_path 'config' 'initializers')
 
-# Ignore bundler config.
-/base/.bundle
-
-# Ignore all logfiles and tempfiles.
-/base/log/*
-/base/tmp/*
-!/base/log/.keep
-!/base/tmp/.keep
-
-# Ignore pidfiles, but keep the directory.
-/base/tmp/pids/*
-!/base/tmp/pids/
-!/base/tmp/pids/.keep
-
-/base/public/assets
-
-# Ignore master key for decrypting credentials and more.
-/base/config/master.key
-"@ > .gitignore
-
-
+Write-host "Created project $project_name at $project_path"

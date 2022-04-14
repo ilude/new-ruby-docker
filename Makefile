@@ -1,6 +1,5 @@
-SHELL := pwsh -NoProfile
 
-DOCKER_BUILDKIT := 1
+PROJECT_NAME := $(lastword $(MAKECMDGOALS))
 
-build:
-	docker build -t rails-builder ./rails-builder-image/
+.DEFAULT:
+	@pwsh .\build.ps1 $(PROJECT_NAME)

@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  app:
+    networks:
+      - influx
+    labels:
+      - influx.frontend.name=vps-local.rammount.com
+      - influx.port=3000
+
+networks:
+  influx:
+    external: true 
