@@ -14,7 +14,6 @@ ENV TZ=America/New_York
 RUN apk --no-cache add \
   ca-certificates \
   curl \
-#  freetds-dev \
   tzdata && \
   ln -snf /etc/localtime /usr/share/zoneinfo/$TZ && echo $TZ > /etc/timezone && \
   addgroup -S $APP_USER && \
@@ -26,6 +25,7 @@ RUN apk --no-cache add \
 WORKDIR $APP
 
 #COPY build/base/*-entrypoint.sh /usr/local/bin
+#RUN  chmod +x /usr/local/bin/*-entrypoint.sh 
 COPY --chmod=755 <<-"EOF" /usr/local/bin/docker-entrypoint.sh
 #!/bin/bash
 set -e
@@ -34,8 +34,6 @@ rm -f /app/tmp/pids/*.pid
 exec $@
 EOF
 
-#RUN  chmod +x /usr/local/bin/*-entrypoint.sh 
-  
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bundle", "exec", "puma"]
 

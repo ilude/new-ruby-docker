@@ -32,7 +32,9 @@ COPY <<-"EOF" /tmp/template.rb
   gem "bundler-audit"
   gem "rubocop-rails"
   gem "rufus-scheduler"
-#  gem "activerecord-nulldb-adapter"
+  gem 'lograge'
+  gem 'logstash-event'
+  gem 'logstash-logger'
 
   gem_group :test do
     gem "selenium-webdriver"

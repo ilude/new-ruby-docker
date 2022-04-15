@@ -62,16 +62,12 @@ $gid = $(id -g)
 docker build -t rails-project-builder ./rails-builder-image/
 docker run --rm -it -v ${rails_base_path}:/app  --user ${uid}:${gid} rails-project-builder
 
-Copy-Item -Path './templates/Makefile' -Destination $project_path
-Copy-Item -Path './templates/Dockerfile' -Destination $project_path
+Copy-Item -Path './templates/*file' -Destination $project_path
 Copy-Item -Path './templates/docker-compose.*' -Destination $project_path
-Copy-Item -Path './templates/Guardfile' -Destination $rails_base_path
-Copy-Item -Path './templates/dockerignore' -Destination $(Join-path $project_path '.dockerignore')
-Copy-Item -Path './templates/gitignore' -Destination $(Join-path $project_path '.gitignore')
-Copy-Item -Path './templates/rubycop.yml' -Destination $(Join-path $project_path '.rubycop.yml')
-Copy-Item -Path './templates/email_interceptor.rb' -Destination $(Join-path $rails_base_path 'config' 'initializers')
-Copy-Item -Path './templates/vscode_tasks.json' -Destination $(Join-path $vscode_path 'tasks.json')
-Copy-Item -Path './templates/vscode_launch.json' -Destination $(Join-path $vscode_path 'launch.json')
+Copy-Item -Path './templates/dotfiles/*' -Destination $project_path
+Copy-Item -Path './templates/.vscode/*' -Destination $vscode_path 
+
+Copy-Item -Path './templates/base/*' -Destination $rails_base_path -Recurse -Force
 
 $current_dir = $(pwd)
 
