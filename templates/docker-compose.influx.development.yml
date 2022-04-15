@@ -4,7 +4,7 @@ services:
     networks:
       - influx
     labels:
-      - influx.frontend.name=vps-local.rammount.com
+      - influx.frontend.name=${APP_NAME}.local.${APP_DOMAIN}
       - influx.port=3000
 
 networks:

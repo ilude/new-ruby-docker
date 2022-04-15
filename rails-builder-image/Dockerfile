@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.3-labs 
 FROM ruby:3-alpine
-RUN apk --no-cache add bash build-base freetds-dev git
+RUN apk --no-cache add bash build-base git
+#RUN apk --no-cache add freetds-dev 
 RUN gem install rails guard
 RUN mkdir /app
 WORKDIR /app
@@ -20,15 +21,34 @@ COPY <<-"EOF" /tmp/options
   --skip-test 
   --skip-turbolinks
   --asset-pipeline=propshaft
-  --database=sqlserver 
+  --skip-active-record
+  #--database=sqlserver 
 EOF
 
 # https://guides.rubyonrails.org/rails_application_templates.html
 COPY <<-"EOF" /tmp/template.rb
+  gem "foreman"
+  gem "brakeman"
+  gem "bundler-audit"
+  gem "rubocop-rails"
+  gem "rufus-scheduler"
+#  gem "activerecord-nulldb-adapter"
+
+  gem_group :test do
+    gem "selenium-webdriver"
+    gem "capybara"
+    gem "webdrivers"
+    gem "rspec-rails"
+    gem "rubocop-rspec"
+  end
+
   gem_group :development do
     gem "guard"
     gem "guard-puma"
     gem "guard-bundler"
+    gem "better_errors"
+    gem "binding_of_caller"
+    gem "byebug", platforms: [:mri, :mingw, :x64_mingw]
   end
 EOF
 

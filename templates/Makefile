@@ -70,16 +70,16 @@ TRAEFIK := $(shell docker ps -a | grep traefik | wc -l )
 INFLUX := $(shell docker ps -a | grep influx | wc -l )
 
 ifeq (1, $(TRAEFIK))
-	FLAGS += -f ./docker-compose.traefik.yml
+	FLAGS += -f ./docker-compose.traefik.$(ENV_CONTEXT).yml
 else ifeq (1, $(INFLUX))
-	FLAGS += -f ./docker-compose.influx.yml
+	FLAGS += -f ./docker-compose.influx.$(ENV_CONTEXT).yml
 else
 	FLAGS += -f ./docker-compose.portmap.yml
 endif
 
 # get the app name from the current directory
 export APP_NAME := $(notdir $(shell pwd))
-export APP_DOMAIN := $(or $(shell hostname -d), ilude.com)
+export APP_DOMAIN := $(or $(shell hostname -d), rammount.com)
 
 # use the rest as arguments as empty targets
 EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))

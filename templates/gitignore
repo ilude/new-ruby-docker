@@ -1,9 +1,18 @@
 # ignore enviroment files
 .env
+.rspec
 .bash_history
+.byebug_history
+
+*.rbc
+*.orig
+rerun.txt
+capybara-*.html
+pickle-email-*.html
 
 # Ignore bundler config.
 /base/.bundle
+/base/vendor/bundle
 
 # Ignore all logfiles and tempfiles.
 /base/log/*
@@ -13,10 +22,17 @@
 
 # Ignore pidfiles, but keep the directory.
 /base/tmp/pids/*
-!/base/tmp/pids/
 !/base/tmp/pids/.keep
 
+/base/db/*.sqlite3
+/base/db/*.sqlite3-journal
+/base/db/*.sqlite3-[0-9]*
+/base/public/system
 /base/public/assets
+/base/node_modules
+/base/coverage/
+/base/spec/tmp
 
 # Ignore master key for decrypting credentials and more.
 /base/config/master.key
+/base/config/initializers/secret_token.rb

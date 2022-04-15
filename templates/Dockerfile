@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.3-labs 
 FROM ruby:3-alpine AS base
 
-ARG BUNDLE_ARGS=--deployment --without development test
+ARG BUNDLE_ARGS
 ARG APP_USER=anvil
 
 ENV APP=/app
@@ -12,10 +12,9 @@ ENV LANG=en_US.UTF-8
 ENV TZ=America/New_York
 
 RUN apk --no-cache add \
-  bash \
   ca-certificates \
   curl \
-  freetds-dev \
+#  freetds-dev \
   tzdata && \
   ln -snf /etc/localtime /usr/share/zoneinfo/$TZ && echo $TZ > /etc/timezone && \
   addgroup -S $APP_USER && \
@@ -26,8 +25,16 @@ RUN apk --no-cache add \
 
 WORKDIR $APP
 
-COPY build/base/*-entrypoint.sh /usr/local/bin
-RUN  chmod +x /usr/local/bin/*-entrypoint.sh 
+#COPY build/base/*-entrypoint.sh /usr/local/bin
+COPY --chmod=755 <<-"EOF" /usr/local/bin/docker-entrypoint.sh
+#!/bin/bash
+set -e
+# Remove pre-existing pid files
+rm -f /app/tmp/pids/*.pid
+exec $@
+EOF
+
+#RUN  chmod +x /usr/local/bin/*-entrypoint.sh 
   
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bundle", "exec", "puma"]
@@ -38,22 +45,24 @@ CMD ["bundle", "exec", "puma"]
 FROM base AS dev
 
 RUN apk --no-cache add \
+  bash \
   build-base \
   rm -rf /var/cache/apk/* 
 
 COPY ./base/Gemfile ./base/Gemfile.lock $APP
-RUN bundle install ${BUNDLE_ARGS} && chown -R $APP_USER:$APP_USER /usr/local/bundle
+RUN bundle install ${BUNDLE_ARGS} && \
+    chown -R $APP_USER:$APP_USER /usr/local/bundle
 ENV PATH="$APP/bin:${PATH}"
 
 
 ##############################
 # Begin PROD 
 ##############################
-FROM dev AS prod
+FROM base AS prod
 
 # copy gems from dev
 COPY --from=dev /usr/local/bundle/ /usr/local/bundle/
 
-COPY  --chown=$APP_USER:$APP_USER ./base/ /app
+COPY --chown=$APP_USER:$APP_USER ./base/ /app
 
 USER $APP_USER

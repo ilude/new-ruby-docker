@@ -50,12 +50,10 @@ else {
 }
 
 $rails_base_path = [IO.Path]::Combine($project_path, 'base')
-$build_base_path = [IO.Path]::Combine($project_path, 'build', 'base')
 $vscode_path = [IO.Path]::Combine($project_path, '.vscode')
 
 # create project directory structure
 New-Item -Type Directory -Path $rails_base_path > $null
-New-Item -Type Directory -Path $build_base_path > $null
 New-Item -Type Directory -Path $vscode_path > $null
 
 $uid = $(id -u)
@@ -67,10 +65,10 @@ docker run --rm -it -v ${rails_base_path}:/app  --user ${uid}:${gid} rails-proje
 Copy-Item -Path './templates/Makefile' -Destination $project_path
 Copy-Item -Path './templates/Dockerfile' -Destination $project_path
 Copy-Item -Path './templates/docker-compose.*' -Destination $project_path
-Copy-Item -Path './templates/docker-entrypoint.sh' -Destination $build_base_path
 Copy-Item -Path './templates/Guardfile' -Destination $rails_base_path
 Copy-Item -Path './templates/dockerignore' -Destination $(Join-path $project_path '.dockerignore')
 Copy-Item -Path './templates/gitignore' -Destination $(Join-path $project_path '.gitignore')
+Copy-Item -Path './templates/rubycop.yml' -Destination $(Join-path $project_path '.rubycop.yml')
 Copy-Item -Path './templates/email_interceptor.rb' -Destination $(Join-path $rails_base_path 'config' 'initializers')
 Copy-Item -Path './templates/vscode_tasks.json' -Destination $(Join-path $vscode_path 'tasks.json')
 Copy-Item -Path './templates/vscode_launch.json' -Destination $(Join-path $vscode_path 'launch.json')

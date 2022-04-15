@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  app:
+    build:
+      target: prod
+      args: 
+        - BUNDLE_ARGS=--deployment --without development test
+    labels:
+      - joyride.host.name=${APP_NAME}.${APP_DOMAIN}
