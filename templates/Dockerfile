@@ -14,7 +14,7 @@ ENV TZ=America/New_York
 RUN apk --no-cache add \
   ca-certificates \
   curl \
-#  freetds-dev \
+  freetds-dev \
   tzdata && \
   ln -snf /etc/localtime /usr/share/zoneinfo/$TZ && echo $TZ > /etc/timezone && \
   addgroup -S $APP_USER && \

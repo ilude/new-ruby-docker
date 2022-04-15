@@ -21,8 +21,7 @@ COPY <<-"EOF" /tmp/options
   --skip-test 
   --skip-turbolinks
   --asset-pipeline=propshaft
-  --skip-active-record
-  #--database=sqlserver 
+  --database=sqlserver 
 EOF
 
 # https://guides.rubyonrails.org/rails_application_templates.html
@@ -32,7 +31,10 @@ COPY <<-"EOF" /tmp/template.rb
   gem "bundler-audit"
   gem "rubocop-rails"
   gem "rufus-scheduler"
-#  gem "activerecord-nulldb-adapter"
+  gem "tiny_tds"
+  gem "composite_primary_keys"
+  gem "activerecord-sqlserver-adapter"
+  gem "activerecord-nulldb-adapter"
 
   gem_group :test do
     gem "selenium-webdriver"
