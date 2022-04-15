@@ -79,7 +79,7 @@ endif
 
 # get the app name from the current directory
 export APP_NAME := $(notdir $(shell pwd))
-export APP_DOMAIN := $(or $(shell hostname -d), rammount.com)
+export APP_DOMAIN := $(or $(shell hostname -d 2>/dev/null), rammount.com)
 
 # use the rest as arguments as empty targets
 EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -88,9 +88,6 @@ $(eval $(EMPTY_TARGETS):;@:)
 up: build
 	@-rm -f tmp/pids/*.pid # - ignore errors
 	docker-compose $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
-
-env: 
-	env | sort
 
 echo:
 	@echo =========================================
@@ -126,11 +123,14 @@ bundle: build
 build: .env base/Gemfile.lock
 	docker-compose $(FLAGS) build 
 
+env: 
+	env | sort
+
 .env:
-	echo "RAILS_EMAIL_OVERRIDE=${EMAIL}" > .env
+	@echo "RAILS_EMAIL_OVERRIDE=${EMAIL}" > .env
 
 base/Gemfile.lock:
-	touch base/Gemfile.lock
+	@touch base/Gemfile.lock
 
 logs:
 	docker-compose  $(FLAGS) logs -f

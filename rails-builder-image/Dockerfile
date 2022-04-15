@@ -31,6 +31,9 @@ COPY <<-"EOF" /tmp/template.rb
   gem "bundler-audit"
   gem "rubocop-rails"
   gem "rufus-scheduler"
+  gem 'lograge'
+  gem 'logstash-event'
+  gem 'logstash-logger'
   gem "tiny_tds"
   gem "composite_primary_keys"
   gem "activerecord-sqlserver-adapter"
