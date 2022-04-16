@@ -1,5 +1,7 @@
-Builds a new Ruby on Rails project that is docker-compose ready
+Builds a new minimal Ruby on Rails project (no database) that is docker-compose ready
 
+See [new-ruby-docker/Dockerfile](blob/master/rails-builder-image/Dockerfile) if you want to enable/disable additional rails features 
+ 
 Requires [Powershell Core](https://community.chocolatey.org/packages/powershell-core) (pwsh) and [GNU Make](https://community.chocolatey.org/packages/make)
 Both can be installed using [Chocolatey](https://chocolatey.org/)
 
