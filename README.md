@@ -23,4 +23,4 @@ make
 ```
 open a browser and go to [http://localhost:3000/](http://localhost:3000/)
 
-There is also a [sqlserver git branch](tree/sqlserver) that will build a project that can use Microsoft Sql Server database
+There is also a [sqlserver git branch](https://github.com/ilude/new-ruby-docker/tree/sqlserver) that will build a project that can use Microsoft Sql Server database
