@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - RAILS_ENV=${ENV_CONTEXT}
     labels:
       - autoheal=true
       - com.centurylinklabs.watchtower.enable=true

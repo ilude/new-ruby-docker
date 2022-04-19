@@ -23,7 +23,6 @@ export USERNAME := $(or $(USERNAME), drone)
 #export EMAIL := $(or $(GIT_COMMITTER_EMAIL), $(shell git config user.email))
 export EMAIL := $(or $(GIT_COMMITTER_EMAIL), $(shell git config user.email))
 
-
 ifdef DRONE_REPO_BRANCH
 	local_branch := $(DRONE_REPO_BRANCH)
 else
@@ -35,9 +34,6 @@ ifeq (master,$(local_branch))
 else
 	ENV_CONTEXT := $(local_branch)
 endif
-
-# determine the name of the first service in the docker-compose.yml
-export ATTACH_HOST := $(or $(shell awk 'f{print;f=0} /service/{f=1}' docker-compose.yml | sed -r 's/\s+|\://g'), webapp)
 
 # If the first argument is "deploy"...
 ifeq (deploy,$(firstword $(MAKECMDGOALS)))
@@ -58,11 +54,9 @@ export DEPLOY_STAGE
 export ENV_CONTEXT
 
 # set the docker-compose FLAGS based on the DEPLOY_STAGE value
-FLAGS = -f ./docker-compose.yml
+FLAGS = 
 
-ifeq (development,$(DEPLOY_STAGE))
-	FLAGS += -f ./docker-compose.override.yml
-else ifneq (,$(wildcard ./docker-compose.$(DEPLOY_STAGE).yml))
+ifneq (,$(wildcard ./docker-compose.$(DEPLOY_STAGE).yml))
   FLAGS += -f ./docker-compose.$(DEPLOY_STAGE).yml
 endif
 
@@ -73,10 +67,21 @@ ifeq (1, $(TRAEFIK))
 	FLAGS += -f ./docker-compose.traefik.$(ENV_CONTEXT).yml
 else ifeq (1, $(INFLUX))
 	FLAGS += -f ./docker-compose.influx.$(ENV_CONTEXT).yml
-else
+else ifeq (development,$(DEPLOY_STAGE))
 	FLAGS += -f ./docker-compose.portmap.yml
 endif
 
+# check if rufus is set to be enabled 
+ifeq (1, $(ENABLE_RUFUS_SCHEDULER))
+	FLAGS += -f ./docker-compose.rufus.yml
+endif
+
+# determine the name of the first service in the docker-compose.yml
+ifeq (development, $(DEPLOY_STAGE))
+	export ATTACH_HOST := app
+else
+	export ATTACH_HOST := app-green
+endif
 # get the app name from the current directory
 export APP_NAME := $(notdir $(shell pwd))
 export APP_DOMAIN := $(or $(shell hostname -d 2>/dev/null), rammount.com)
@@ -97,6 +102,7 @@ echo:
 	@echo = EMAIL: $(EMAIL)
 	@echo = ENV_CONTEXT:  $(ENV_CONTEXT)
 	@echo = DEPLOY_STAGE: $(DEPLOY_STAGE)
+	@echo = ATTACH_HOST: $(ATTACH_HOST)
 	@echo = FLAGS: $(FLAGS)
 	@echo = TRAEFIK: $(TRAEFIK)
 	@echo = INFLUX: $(INFLUX)
@@ -128,9 +134,29 @@ env:
 
 .env:
 	@echo "RAILS_EMAIL_OVERRIDE=${EMAIL}" > .env
+	cat env.sample >> .env
 
 base/Gemfile.lock:
 	@touch base/Gemfile.lock
 
 logs:
 	docker-compose  $(FLAGS) logs -f
+
+tag:
+	git -c user.email=${EMAIL} -c user.name='${USER}' tag -a "${RAILS_ENV}-$(DATE)" -m "deployed to ${RAILS_ENV} by ${USER}"
+	git -c user.email=${EMAIL} -c user.name='${USER}' push --follow-tags
+
+update: build	
+	@echo "restarting service_blue container..."
+	-docker-compose $(FLAGS) stop --timeout 30 service_blue
+	docker-compose $(FLAGS) up -d --force-recreate service_blue
+
+	sleep 10
+	
+	@echo "restarting service_green container..."
+	-docker-compose $(FLAGS) stop --timeout 30 service_green
+	docker-compose $(FLAGS) up -d --force-recreate service_green
+
+newrelic-mark:
+	@echo Creating New Relic Deployment marker
+	docker-compose $(FLAGS) exec -T $(ATTACH_HOST) ${COMMAND}

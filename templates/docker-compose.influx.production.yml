@@ -1,6 +1,12 @@
 version: "3.8"
 services:
-  app:
+  app-green:
+    networks:
+      - influx
+    labels:
+      - influx.frontend.name=${APP_NAME}.${APP_DOMAIN}
+      - influx.port=3000
+  app-blue:
     networks:
       - influx
     labels:
