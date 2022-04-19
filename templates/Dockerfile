@@ -6,12 +6,13 @@ ARG APP_USER=anvil
 
 ENV APP=/app
 ENV HOME=$APP
-ENV RACK_ENV=production
+
 ENV LANGUAGE=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV TZ=America/New_York
 
 RUN apk --no-cache add \
+  bash \
   ca-certificates \
   curl \
   freetds-dev \
@@ -30,8 +31,11 @@ WORKDIR $APP
 COPY --chmod=755 <<-"EOF" /usr/local/bin/docker-entrypoint.sh
 #!/bin/bash
 set -e
-# Remove pre-existing pid files
-rm -f /app/tmp/pids/*.pid
+ if [[ -v ENTRYPOINT_DEBUG ]] && [[ "$ENTRYPOINT_DEBUG" == 1 ]]; then
+     set -x
+    set -o xtrace
+ fi
+echo "Running: $@"
 exec $@
 EOF
 
@@ -44,15 +48,12 @@ CMD ["bundle", "exec", "puma"]
 FROM base AS dev
 
 RUN apk --no-cache add \
-  bash \
   build-base \
   rm -rf /var/cache/apk/* 
 
 COPY ./base/Gemfile ./base/Gemfile.lock $APP
-RUN bundle install ${BUNDLE_ARGS} && \
-    chown -R $APP_USER:$APP_USER /usr/local/bundle
+RUN bundle install 
 ENV PATH="$APP/bin:${PATH}"
-
 
 ##############################
 # Begin PROD 
@@ -63,5 +64,7 @@ FROM base AS prod
 COPY --from=dev /usr/local/bundle/ /usr/local/bundle/
 
 COPY --chown=$APP_USER:$APP_USER ./base/ /app
+
+ENV RAILS_ENV=production
 
 USER $APP_USER

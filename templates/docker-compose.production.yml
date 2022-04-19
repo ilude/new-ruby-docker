@@ -1,9 +1,21 @@
 version: "3.8"
 services:
-  app:
+  app-green:
+    extends:
+      file: docker-compose.common.yml
+      service: app
     build:
       target: prod
-      args: 
-        - BUNDLE_ARGS=--deployment --without development test
+    container_name: ${APP_NAME}-green
+    labels:
+      - joyride.host.name=${APP_NAME}.${APP_DOMAIN}
+
+  app-blue:
+    extends:
+      file: docker-compose.common.yml
+      service: app
+    build:
+      target: prod
+    container_name: ${APP_NAME}-blue
     labels:
       - joyride.host.name=${APP_NAME}.${APP_DOMAIN}

@@ -1,12 +1,20 @@
 version: "3.8"
 services:
-  app:
+  app-green:
     networks:
       - traefik
     labels:
       - traefik.enable=true
       - traefik.http.routers.${APP_NAME}.entrypoints=websecure
       - traefik.http.routers.${APP_NAME}.rule=Host(`${APP_NAME}.${APP_DOMAIN}`)
+      - traefik.http.services.${APP_NAME}.loadbalancer.server.port=3000
+  app-blue:
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${APP_NAME}.entrypoints=websecure
+      - traefik.http.routers.${APP_NAME}.rule=Host(`${APP_NAME}.local.${APP_DOMAIN}`)
       - traefik.http.services.${APP_NAME}.loadbalancer.server.port=3000
 
 networks:

@@ -1,0 +1,10 @@
+{
+  "configurations": [
+    {
+      "name": "Launch Terminal",
+      "type": "node",
+      "request": "launch",
+      "preLaunchTask": "pwsh"
+    }
+  ]   
+}

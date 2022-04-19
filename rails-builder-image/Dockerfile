@@ -26,7 +26,8 @@ EOF
 
 # https://guides.rubyonrails.org/rails_application_templates.html
 COPY <<-"EOF" /tmp/template.rb
-  gem "foreman"
+  route "root to: 'home#index'"
+
   gem "brakeman"
   gem "bundler-audit"
   gem "rubocop-rails"
