@@ -126,11 +126,13 @@ bash: build
 bundle: build 
 	docker-compose -f docker-compose.yml -f docker-compose.bundle.yml run --rm $(ATTACH_HOST) bash -l
 
-build: .env base/Gemfile.lock
+build: init
 	docker-compose $(FLAGS) build 
 
 env: 
 	env | sort
+
+init: .env base/Gemfile.lock
 
 .env:
 	@echo "RAILS_EMAIL_OVERRIDE=${EMAIL}" > .env
