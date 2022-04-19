@@ -29,13 +29,10 @@ EOF
 COPY <<-"EOF" /tmp/template.rb
   route "root to: 'home#index'"
 
-  gem "brakeman"
-  gem "bundler-audit"
-  gem "rubocop-rails"
-  gem "rufus-scheduler"
   gem 'lograge'
   gem 'logstash-event'
   gem 'logstash-logger'
+  gem "rufus-scheduler"
 
   gem_group :test do
     gem "selenium-webdriver"
@@ -46,6 +43,9 @@ COPY <<-"EOF" /tmp/template.rb
   end
 
   gem_group :development do
+    gem "brakeman"
+    gem "bundler-audit"
+    gem "rubocop-rails"
     gem "guard"
     gem "guard-puma"
     gem "guard-bundler"
