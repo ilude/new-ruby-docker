@@ -76,6 +76,8 @@ git init
 git add .
 git commit -m 'initial import'
 
+make init
+
 cd $current_dir
 Write-host "Created project $project_name at $project_path"
 
