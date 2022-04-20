@@ -10,6 +10,8 @@ rerun.txt
 capybara-*.html
 pickle-email-*.html
 
+docker-compose.yml
+
 # Ignore bundler config.
 /base/.bundle
 /base/vendor/bundle

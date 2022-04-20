@@ -1,0 +1,11 @@
+x-service: &app-service
+  <<: *app-default
+  networks:
+    - influx
+  labels:
+    - influx.port=3000
+    - influx.frontend.name=${APP_HOST_NAME}.${APP_DOMAIN}
+
+networks:
+  influx:
+    external: true

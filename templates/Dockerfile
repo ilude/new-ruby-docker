@@ -2,6 +2,7 @@
 FROM ruby:3-alpine AS base
 
 ARG APP_USER=anvil
+ARG RAILS_ENV
 
 ARG BUNDLE_WITH
 ARG BUNDLE_WITHOUT
@@ -13,6 +14,8 @@ ENV BUNDLE_DEPLOYMENT=${BUNDLE_DEPLOYMENT}
 
 ENV APP=/app
 ENV HOME=$APP
+ENV PATH="$APP/bin:${PATH}"
+ENV RAILS_ENV=${RAILS_ENV}
 
 ENV LANGUAGE=en_US.UTF-8
 ENV LANG=en_US.UTF-8
@@ -54,7 +57,7 @@ CMD ["bundle", "exec", "puma"]
 ##############################
 FROM base AS dev
 
-ENV PATH="$APP/bin:${PATH}"
+
 
 RUN apk --no-cache add \
   build-base \
