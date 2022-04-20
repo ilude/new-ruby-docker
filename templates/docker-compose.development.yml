@@ -6,14 +6,26 @@ services:
       service: app
     build:
       target: dev
+      args:
+        - BUNDLE_DEPLOYMENT=false
+        - BUNDLE_WITH=development:test
     command: bundle exec guard --no-interactions 
     environment:
-      - BUNDLE_DEPLOYMENT=false
-      - BUNDLE_WITH=development:test
       - PUMA_WORKERS=0
       - RAILS_DEVELOPMENT_HOSTS=${APP_NAME}.local.${APP_DOMAIN}
     volumes:
-      - ./base:/app
+      - code:/app
     labels:
       - joyride.host.name=${APP_NAME}.local.${APP_DOMAIN}
 
+volumes:
+  code:
+
+x-mutagen:
+  sync:
+    defaults:
+      ignore:
+        vcs: true
+    code:
+      alpha: "./base"
+      beta: "volume://code"
