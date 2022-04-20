@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  app-green:
+    <<: *app-default
+    container_name: ${APP_NAME}-green 
+    hostname: ${APP_NAME}-green 
+      
+  app-blue:
+    <<: *app-default
+    container_name: ${APP_NAME}-green 
+    hostname: ${APP_NAME}-green 

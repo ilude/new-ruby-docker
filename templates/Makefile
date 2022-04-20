@@ -16,11 +16,10 @@ endif
 export DATE := $(shell date '+%Y-%m-%d-%H.%M.%S')
 export PUID := $(shell id -u)
 export PGID := $(shell id -g)
+export DEPLOY_STAGE := $(or $(word 2,$(MAKECMDGOALS)),development)
 
 # if username not set we are in a drone environment
 export USERNAME := $(or $(USERNAME), drone)
-
-#export EMAIL := $(or $(GIT_COMMITTER_EMAIL), $(shell git config user.email))
 export EMAIL := $(or $(GIT_COMMITTER_EMAIL), $(shell git config user.email))
 
 ifdef DRONE_REPO_BRANCH
@@ -29,73 +28,43 @@ else
 	local_branch = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\n')
 endif
 
-ifeq (master,$(local_branch))
-	ENV_CONTEXT := production
-else
-	ENV_CONTEXT := $(local_branch)
-endif
-
-# If the first argument is "deploy"...
-ifeq (deploy,$(firstword $(MAKECMDGOALS)))
-	ENV_CONTEXT := production
-	PASSED_COMMAND := $(word 2,$(MAKECMDGOALS))
-	DEPLOY_STAGE := $(or $(PASSED_COMMAND),$(ENV_CONTEXT))
-# If the first argument is "test"...
-else ifeq (test,$(firstword $(MAKECMDGOALS)))
-	# default DEPLOY_STAGE & ENV_CONTEXT to test
-	ENV_CONTEXT := $(or $(word 2,$(MAKECMDGOALS)),test)
-	DEPLOY_STAGE := $(or $(word 2,$(MAKECMDGOALS)),test)
-else
-	# default DEPLOY_STAGE to development
-	ENV_CONTEXT := $(or $(word 2,$(MAKECMDGOALS)),development)
-	DEPLOY_STAGE := $(or $(word 2,$(MAKECMDGOALS)),development)
-endif
-export DEPLOY_STAGE
-export ENV_CONTEXT
-
-
 ifeq (, $(shell which mutagen-compose))
 	COMPOSE_COMMAND = docker-compose
 else 
-	ifeq (development, $(ENV_CONTEXT))
+	ifeq (development, $(DEPLOY_STAGE))
 		COMPOSE_COMMAND = mutagen-compose
 	else
 		COMPOSE_COMMAND = docker-compose
 	endif
 endif
 
-# set the $(COMPOSE_COMMAND) FLAGS based on the DEPLOY_STAGE value
-FLAGS = 
-
-ifneq (,$(wildcard ./docker-compose.$(DEPLOY_STAGE).yml))
-  FLAGS += -f ./docker-compose.$(DEPLOY_STAGE).yml
+ifeq (1, $(shell docker ps -a | grep traefik | wc -l ))
+	SERVICE_TYPE := traefik
+else ifeq (1, $(shell docker ps -a | grep influx | wc -l ))
+	SERVICE_TYPE := influx
+else 
+	SERVICE_TYPE := portmap
 endif
 
-TRAEFIK := $(shell docker ps -a | grep traefik | wc -l )
-INFLUX := $(shell docker ps -a | grep influx | wc -l )
-
-ifeq (1, $(TRAEFIK))
-	FLAGS += -f ./docker-compose.traefik.$(ENV_CONTEXT).yml
-else ifeq (1, $(INFLUX))
-	FLAGS += -f ./docker-compose.influx.$(ENV_CONTEXT).yml
-else ifeq (development,$(DEPLOY_STAGE))
-	FLAGS += -f ./docker-compose.portmap.yml
-endif
+COMPOSE_FILES := ./compose/docker-compose.common.yml
+COMPOSE_FILES += ./compose/docker-compose.proxy.${SERVICE_TYPE}.yml
+COMPOSE_FILES += ./compose/docker-compose.$(DEPLOY_STAGE).yml
 
 # check if rufus is set to be enabled 
 ifeq (1, $(ENABLE_RUFUS_SCHEDULER))
-	FLAGS += -f ./docker-compose.rufus.yml
+	COMPOSE_FILES += ./compose/docker-compose.rufus.yml
 endif
 
-# determine the name of the first service in the docker-compose.yml
-ifeq (development, $(DEPLOY_STAGE))
-	export ATTACH_HOST := app
-else
-	export ATTACH_HOST := app-green
-endif
 # get the app name from the current directory
 export APP_NAME := $(notdir $(shell pwd))
 export APP_DOMAIN := $(or $(shell hostname -d 2>/dev/null), rammount.com)
+ifeq (development, $(DEPLOY_STAGE))
+	export ATTACH_HOST 		:= app
+	export APP_HOST_NAME 	:= $(APP_NAME).local
+else
+	export ATTACH_HOST 		:= app-green
+	export APP_HOST_NAME 	:= $(APP_NAME)
+endif
 
 # use the rest as arguments as empty targets
 EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -110,13 +79,11 @@ echo:
 	@echo = APP_DOMAIN: $(APP_DOMAIN)
 	@echo = USERNAME: $(USERNAME)
 	@echo = EMAIL: $(EMAIL)
-	@echo = ENV_CONTEXT:  $(ENV_CONTEXT)
 	@echo = DEPLOY_STAGE: $(DEPLOY_STAGE)
 	@echo = ATTACH_HOST: $(ATTACH_HOST)
 	@echo = COMPOSE_COMMAND: $(COMPOSE_COMMAND)
-	@echo = FLAGS: $(FLAGS)
-	@echo = TRAEFIK: $(TRAEFIK)
-	@echo = INFLUX: $(INFLUX)
+	@echo = COMPOSE_FILES: $(COMPOSE_FILES)
+	@echo = SERVICE_TYPE: $(SERVICE_TYPE)
 	@echo =========================================
 
 start: build 
@@ -144,11 +111,17 @@ build: init
 env: 
 	env | sort
 
-init: .env base/Gemfile.lock
+init: FORCE docker-compose.yml .env base/Gemfile.lock 
+
+FORCE:
+	rm -f docker-compose.yml
+
+docker-compose.yml: 
+	cat ${COMPOSE_FILES} > docker-compose.yml
 
 .env:
 	@echo "RAILS_EMAIL_OVERRIDE=${EMAIL}" > .env
-	cat env.sample >> .env
+	cat .env.sample >> .env
 
 base/Gemfile.lock:
 	@touch base/Gemfile.lock

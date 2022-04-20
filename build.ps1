@@ -63,7 +63,7 @@ docker build -t rails-project-builder ./rails-builder-image/
 docker run --rm -it -v ${rails_base_path}:/app  --user ${uid}:${gid} rails-project-builder
 
 Copy-Item -Path './templates/*file' -Destination $project_path
-Copy-Item -Path './templates/docker-compose.*' -Destination $project_path
+Copy-Item -Path './templates/compose' -Destination $project_path -Recurse -Force
 Copy-Item -Path './templates/dotfiles/*' -Destination $project_path
 Copy-Item -Path './templates/.vscode/*' -Destination $vscode_path 
 

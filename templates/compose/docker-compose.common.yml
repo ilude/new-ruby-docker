@@ -1,0 +1,19 @@
+x-app: &app-default
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: prod
+    args: 
+    - RAILS_ENV=${DEPLOY_STAGE:-production} 
+    - BUNDLE_DEPLOYMENT=true
+    - BUNDLE_WITHOUT=development:test
+  image: ${DOCKER_NAMESPACE:-ilude}/${APP_NAME}-${DEPLOY_STAGE:-production}
+  hostname: ${APP_NAME}-${DEPLOY_STAGE:-production}
+  container_name: ${APP_NAME}
+  restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+  env_file:
+  - .env
+  labels:
+  - autoheal=true
+  - com.centurylinklabs.watchtower.enable=true
+  - joyride.host.name=${APP_HOST_NAME}.${APP_DOMAIN}
