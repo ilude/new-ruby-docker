@@ -5,6 +5,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: prod
+      args:
+        - BUNDLE_DEPLOYMENT=true
+        - BUNDLE_WITHOUT=development:test
     image: ilude/${APP_NAME}-${DEPLOY_STAGE:-production}
     hostname: ${APP_NAME}-${DEPLOY_STAGE:-production}
     container_name: ${APP_NAME}

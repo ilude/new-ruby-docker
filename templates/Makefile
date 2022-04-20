@@ -53,7 +53,18 @@ endif
 export DEPLOY_STAGE
 export ENV_CONTEXT
 
-# set the docker-compose FLAGS based on the DEPLOY_STAGE value
+
+ifeq (, $(shell which mutagen-compose))
+	COMPOSE_COMMAND = docker-compose
+else 
+	ifeq (development, $(ENV_CONTEXT))
+		COMPOSE_COMMAND = mutagen-compose
+	else
+		COMPOSE_COMMAND = docker-compose
+	endif
+endif
+
+# set the $(COMPOSE_COMMAND) FLAGS based on the DEPLOY_STAGE value
 FLAGS = 
 
 ifneq (,$(wildcard ./docker-compose.$(DEPLOY_STAGE).yml))
@@ -91,8 +102,7 @@ EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(EMPTY_TARGETS):;@:)
 
 up: build
-	@-rm -f tmp/pids/*.pid # - ignore errors
-	docker-compose $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
+	$(COMPOSE_COMMAND) $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
 
 echo:
 	@echo =========================================
@@ -103,31 +113,33 @@ echo:
 	@echo = ENV_CONTEXT:  $(ENV_CONTEXT)
 	@echo = DEPLOY_STAGE: $(DEPLOY_STAGE)
 	@echo = ATTACH_HOST: $(ATTACH_HOST)
+	@echo = COMPOSE_COMMAND: $(COMPOSE_COMMAND)
 	@echo = FLAGS: $(FLAGS)
 	@echo = TRAEFIK: $(TRAEFIK)
 	@echo = INFLUX: $(INFLUX)
 	@echo =========================================
 
-start: build
-	docker-compose $(FLAGS) up -d
+start: build 
+	$(COMPOSE_COMMAND) $(FLAGS) up -d
 
-down:
-	docker-compose $(FLAGS) down
+down: detach
+	$(COMPOSE_COMMAND) $(FLAGS) down
 
 restart: down 
 
 test: build
-	docker-compose $(FLAGS) run --rm $(ATTACH_HOST) bundle exec rspec
+	$(COMPOSE_COMMAND) $(FLAGS) run --rm $(ATTACH_HOST) bundle exec rspec
 
 bash: build
-	docker-compose $(FLAGS) run --rm $(ATTACH_HOST) bash -l
+	$(COMPOSE_COMMAND) $(FLAGS) run --rm $(ATTACH_HOST) bash -l
 
 # for bundle updates and other commands that may need root access to the container
 bundle: build 
-	docker-compose -f docker-compose.yml -f docker-compose.bundle.yml run --rm $(ATTACH_HOST) bash -l
+	$(COMPOSE_COMMAND) -f $(COMPOSE_COMMAND).yml -f $(COMPOSE_COMMAND).bundle.yml run --rm $(ATTACH_HOST) bash -l
 
 build: init
-	docker-compose $(FLAGS) build 
+	@-rm -f tmp/pids/*.pid # - ignore errors
+	$(COMPOSE_COMMAND) $(FLAGS) build 
 
 env: 
 	env | sort
@@ -142,7 +154,7 @@ base/Gemfile.lock:
 	@touch base/Gemfile.lock
 
 logs:
-	docker-compose  $(FLAGS) logs -f
+	$(COMPOSE_COMMAND)  $(FLAGS) logs -f
 
 tag:
 	git -c user.email=${EMAIL} -c user.name='${USER}' tag -a "${RAILS_ENV}-$(DATE)" -m "deployed to ${RAILS_ENV} by ${USER}"
@@ -150,15 +162,15 @@ tag:
 
 update: build	
 	@echo "restarting service_blue container..."
-	-docker-compose $(FLAGS) stop --timeout 30 service_blue
-	docker-compose $(FLAGS) up -d --force-recreate service_blue
+	-$(COMPOSE_COMMAND) $(FLAGS) stop --timeout 30 service_blue
+	$(COMPOSE_COMMAND) $(FLAGS) up -d --force-recreate service_blue
 
 	sleep 10
 	
 	@echo "restarting service_green container..."
-	-docker-compose $(FLAGS) stop --timeout 30 service_green
-	docker-compose $(FLAGS) up -d --force-recreate service_green
+	-$(COMPOSE_COMMAND) $(FLAGS) stop --timeout 30 service_green
+	$(COMPOSE_COMMAND) $(FLAGS) up -d --force-recreate service_green
 
 newrelic-mark:
 	@echo Creating New Relic Deployment marker
-	docker-compose $(FLAGS) exec -T $(ATTACH_HOST) ${COMMAND}
+	$(COMPOSE_COMMAND) $(FLAGS) exec -T $(ATTACH_HOST) ${COMMAND}

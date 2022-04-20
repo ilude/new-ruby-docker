@@ -1,8 +1,15 @@
 # syntax=docker/dockerfile:1.3-labs 
 FROM ruby:3-alpine AS base
 
-ARG BUNDLE_ARGS
 ARG APP_USER=anvil
+
+ARG BUNDLE_WITH
+ARG BUNDLE_WITHOUT
+ARG BUNDLE_DEPLOYMENT
+
+ENV BUNDLE_WITH=${BUNDLE_WITH}
+ENV BUNDLE_WITHOUT=${BUNDLE_WITHOUT}
+ENV BUNDLE_DEPLOYMENT=${BUNDLE_DEPLOYMENT}
 
 ENV APP=/app
 ENV HOME=$APP
@@ -46,13 +53,15 @@ CMD ["bundle", "exec", "puma"]
 ##############################
 FROM base AS dev
 
+ENV PATH="$APP/bin:${PATH}"
+
 RUN apk --no-cache add \
   build-base \
   rm -rf /var/cache/apk/* 
 
 COPY ./base/Gemfile ./base/Gemfile.lock $APP
 RUN bundle install 
-ENV PATH="$APP/bin:${PATH}"
+COPY ./base/ /app
 
 ##############################
 # Begin PROD 
