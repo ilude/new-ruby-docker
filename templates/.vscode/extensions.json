@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "aki77.rails-db-schema",
     "aki77.rails-partial",
     "aliariff.vscode-erb-beautify",
     "bung87.rails",
@@ -10,6 +11,7 @@
     "craigmaslowski.erb",
     "dbaeumer.jshint",
     "eamodio.gitlens",
+    "editorconfig.editorconfig",
     "esbenp.prettier-vscode",
     "formulahendry.auto-close-tag",
     "formulahendry.auto-rename-tag",
@@ -21,19 +23,23 @@
     "mateuszdrewniak.ruby-test-runner",
     "matthieumu.vscode-rubycommentdoc",
     "miguel-savignano.ruby-symbols",
+    "mikestead.dotenv",
     "misogi.ruby-rubocop",
     "ms-vscode.powershell",
+    "nhoizey.gremlins",
     "ninoseki.vscode-gem-lens",
     "peakchen90.open-html-in-browser",
     "pranaygp.vscode-css-peek",
     "rayhanw.erb-helpers",
     "rebornix.ruby",
     "redhat.vscode-yaml",
+    "skellock.just",
+    "sorbet.sorbet-vscode-extension",
     "streetsidesoftware.code-spell-checker",
     "vortizhe.simple-ruby-erb",
     "vscode-icons-team.vscode-icons",
     "wingrunr21.vscode-ruby",
-    "zneuray.erb-vscode-snippets",
-    "skellock.just"
+    "zneuray.erb-vscode-snippets"
   ]
 }
+
