@@ -89,7 +89,7 @@ echo:
 start: build 
 	$(COMPOSE_COMMAND) $(FLAGS) up -d
 
-down: detach
+down: 
 	$(COMPOSE_COMMAND) $(FLAGS) down
 
 restart: down 
