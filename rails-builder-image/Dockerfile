@@ -27,6 +27,7 @@ EOF
 # https://guides.rubyonrails.org/rails_application_templates.html
 COPY <<-"EOF" /tmp/template.rb
   route "root to: 'home#index'"
+  environment "config.web_console.whitelisted_ips = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']", env: 'development'
 
   gem 'lograge'
   gem 'logstash-event'
@@ -46,15 +47,20 @@ COPY <<-"EOF" /tmp/template.rb
   end
 
   gem_group :development do
+    gem "rack-mini-profiler", require: false
+    gem 'memory_profiler'
+    gem 'stackprof'
+
     gem "brakeman"
     gem "bundler-audit"
     gem "rubocop-rails"
+
     gem "guard"
     gem "guard-puma"
     gem "guard-bundler"
+
     gem "better_errors"
     gem "binding_of_caller"
-    gem "byebug", platforms: [:mri, :mingw, :x64_mingw]
   end
 EOF
 

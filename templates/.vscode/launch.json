@@ -1,10 +1,17 @@
 {
   "configurations": [
     {
-      "name": "Launch Terminal",
-      "type": "node",
-      "request": "launch",
-      "preLaunchTask": "pwsh"
+      "type": "rdbg",
+      "name": "Attach Ruby Debugger",
+      "request": "attach",
+      "debugPort": "12345",
+      "localfs": true,
+      "sourceMappings": [
+        {
+          "remoteRoot": "/app", //this is dockerized rails app
+          "localRoot": "./base"
+        }
+      ]
     }
   ]   
 }

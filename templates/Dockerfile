@@ -36,15 +36,25 @@ RUN apk --no-cache add \
 
 WORKDIR $APP
 
-#COPY build/base/*-entrypoint.sh /usr/local/bin
-#RUN  chmod +x /usr/local/bin/*-entrypoint.sh 
 COPY --chmod=755 <<-"EOF" /usr/local/bin/docker-entrypoint.sh
 #!/bin/bash
 set -e
- if [[ -v ENTRYPOINT_DEBUG ]] && [[ "$ENTRYPOINT_DEBUG" == 1 ]]; then
-     set -x
-    set -o xtrace
- fi
+if [ -v DOCKER_ENTRYPOINT_DEBUG ] && [ "$DOCKER_ENTRYPOINT_DEBUG" == 1 ]; then
+  set -x
+  set -o xtrace
+fi
+
+if [ "$RAILS_ENV" == "development" ]; 
+then
+    echo "Checking that bundled gems are upto date..."
+    bundle check || bundle install;
+fi
+
+if [ -z ${RAILS_EMAIL_OVERRIDE} ] && [ "$RAILS_ENV" == "development" ]; then 
+    echo "RAILS_EMAIL_OVERRIDE has not been set! Add RAILS_EMAIL_OVERRIDE=<your_email> to .env";
+    exit 1; 
+fi
+
 echo "Running: $@"
 exec $@
 EOF
@@ -57,13 +67,11 @@ CMD ["bundle", "exec", "puma"]
 ##############################
 FROM base AS dev
 
-
-
 RUN apk --no-cache add \
   build-base \
   rm -rf /var/cache/apk/* 
 
-COPY ./base/Gemfile ./base/Gemfile.lock $APP
+COPY ./base/Gemfile* $APP
 RUN bundle install 
 COPY ./base/ /app
 
