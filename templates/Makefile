@@ -35,6 +35,8 @@ else
 		COMPOSE_COMMAND = docker-compose
 	else ifeq (development, $(DEPLOY_STAGE))
 		COMPOSE_COMMAND = mutagen-compose
+		MUTAGEN_UP_TARGET = mutagen_up
+		MUTAGEN_DOWN_TARGET = mutagen_down
 	else
 		COMPOSE_COMMAND = docker-compose
 	endif
@@ -72,8 +74,19 @@ endif
 EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(EMPTY_TARGETS):;@:)
 
-up: build
+up: build $(MUTAGEN_UP_TARGET)
 	$(COMPOSE_COMMAND) $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
+
+mutagen_up:
+	-mutagen daemon start
+
+mutagen_down:
+	-mutagen daemon stop
+
+down: compose_down $(MUTAGEN_DOWN_TARGET)
+
+compose_down:
+	$(COMPOSE_COMMAND) $(FLAGS) down
 
 echo:
 	@echo =========================================
@@ -90,9 +103,6 @@ echo:
 
 start: build 
 	$(COMPOSE_COMMAND) $(FLAGS) up -d
-
-down: 
-	$(COMPOSE_COMMAND) $(FLAGS) down
 
 restart: down 
 
@@ -113,7 +123,7 @@ build: init
 env: 
 	env | sort
 
-init: FORCE docker-compose.yml .env base/Gemfile.lock 
+init: FORCE docker-compose.yml .env 
 
 FORCE:
 	rm -f docker-compose.yml
