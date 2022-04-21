@@ -2,3 +2,4 @@ x-app-portmat: &app-service
   <<: *app-default
   ports:
     - 3000:3000
+
