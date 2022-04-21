@@ -9,3 +9,4 @@ services:
     <<: *app-default
     container_name: ${APP_NAME}-green 
     hostname: ${APP_NAME}-green 
+

@@ -30,8 +30,10 @@ endif
 
 ifeq (, $(shell which mutagen-compose))
 	COMPOSE_COMMAND = docker-compose
-else 
-	ifeq (development, $(DEPLOY_STAGE))
+else
+	ifdef DISABLE_MUTAGEN
+		COMPOSE_COMMAND = docker-compose
+	else ifeq (development, $(DEPLOY_STAGE))
 		COMPOSE_COMMAND = mutagen-compose
 	else
 		COMPOSE_COMMAND = docker-compose

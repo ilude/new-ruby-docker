@@ -1,1 +1,14 @@
+x-service: &app-service
+  <<: *app-default
+  networks:
+    - traefik
+  labels:
+    - traefik.enable=true
+    - traefik.http.routers.${APP_NAME}.entrypoints=websecure
+    - traefik.http.routers.${APP_NAME}.rule=Host(`${APP_HOST_NAME}.${APP_DOMAIN}`)
+    - traefik.http.services.${APP_NAME}.loadbalancer.server.port=3000
+
+networks:
+  traefik:
+    external: true 
 

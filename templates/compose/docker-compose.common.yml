@@ -17,3 +17,4 @@ x-app: &app-default
   - autoheal=true
   - com.centurylinklabs.watchtower.enable=true
   - joyride.host.name=${APP_HOST_NAME}.${APP_DOMAIN}
+

@@ -9,3 +9,4 @@ x-service: &app-service
 networks:
   influx:
     external: true
+

@@ -1,4 +1,4 @@
-
+version: "3.8"
 services:
   app:
     <<: *app-service
@@ -25,3 +25,4 @@ x-mutagen:
     code:
       alpha: "./base"
       beta: "volume://code"
+
