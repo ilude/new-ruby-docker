@@ -1,5 +1,7 @@
 Builds a new minimal Ruby on Rails project (no database) that is docker-compose ready
 
+See [Here](https://github.com/ilude/WindowsPowerShell/blob/master/ruby_install_3.1.2-1.ps1) for powershell script to setup ruby on windows
+
 Also supports, but not required, [Mutagen](https://github.com/mutagen-io/mutagen/releases/tag/v0.13.1) and [Mutagen-Compose](https://github.com/mutagen-io/mutagen-compose/releases/tag/v0.13.1), so that guard will function efficiently and as expected. Download and add both to your PATH
 
 See [new-ruby-docker/Dockerfile](rails-builder-image/Dockerfile) if you want to enable/disable additional rails features 
