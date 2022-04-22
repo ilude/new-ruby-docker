@@ -213,18 +213,23 @@ Rails.application.configure do
     sql_callers = "disabled!".red
   end
 
-  message = []
-  message << "Starting Rails [".green
-  message << Rails.env.yellow
-  message << "] with ".green
-  message << log_type
-  message << " logging enabled at level ".green
-  message << ENV.fetch("RAILS_LOG_LEVEL", "DEBUG".downcase).yellow
-  message << " SQL logging: ".light_blue
-  message << sql_logging
-  message << " SQL callers: ".light_blue
-  message << sql_callers
+  message1 = []
+  message1 << "Rails [".green
+  message1 << Rails.env.yellow
+  message1 << "] with ".green
+  message1 << log_type
+  message1 << " level: ".green
+  message1 << ENV.fetch("RAILS_LOG_LEVEL", "DEBUG".downcase).yellow
+  message2 = []
+  message2 << "SQL logging: ".light_blue
+  message2 << sql_logging
+  message2 << " SQL callers: ".light_blue
+  message2 << sql_callers
 
-  Rails.logger.info message.join
-  Rails.logger.info "Site URL: " + "https://#{ENV['RAILS_DEVELOPMENT_HOSTS']}/".red if ENV['RAILS_DEVELOPMENT_HOSTS']
+  # only log on the main server, not sidekiq, etc
+  if($PROGRAM_NAME.include?('puma'))
+    Rails.logger.info message1.join
+    Rails.logger.info message2.join
+    Rails.logger.info "Site URL: " + "https://#{ENV['RAILS_DEVELOPMENT_HOSTS']}/".red if ENV['RAILS_DEVELOPMENT_HOSTS']
+  end
 end
