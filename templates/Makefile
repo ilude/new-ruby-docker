@@ -76,7 +76,9 @@ EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 $(eval $(EMPTY_TARGETS):;@:)
 
 up: build $(MUTAGEN_UP_TARGET)
-	$(COMPOSE_COMMAND) $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
+	-pwsh -c start "https://$(APP_HOST_NAME).$(APP_DOMAIN)"
+	-$(COMPOSE_COMMAND) $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
+	$(MAKE) down
 
 mutagen_up:
 	-mutagen daemon start

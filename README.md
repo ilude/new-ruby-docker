@@ -29,4 +29,6 @@ open a browser and go to [http://localhost:3000/](http://localhost:3000/)
 
 There is also a [sqlserver git branch](https://github.com/ilude/new-ruby-docker/tree/sqlserver) that will build a project that can use Microsoft Sql Server database
 
-and a [services git branch](https://github.com/ilude/new-ruby-docker/tree/services) that includes a more full featured rails project that includes redis,sidekiq,memcache
+and a [services git branch](https://github.com/ilude/new-ruby-docker/tree/services) that includes a more full featured rails project that includes [redis](https://github.com/redis/redis-rb),[sidekiq](https://github.com/mperham/sidekiq/wiki),[memcached](https://github.com/petergoldstein/dalli)
+
+The [full git branch](https://github.com/ilude/new-ruby-docker/tree/full) generates a full rails project only skipping bundle and git initialization, but does not include additional services at this time. 

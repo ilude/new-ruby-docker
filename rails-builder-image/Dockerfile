@@ -15,11 +15,9 @@ COPY <<-"EOF" /tmp/options
   --skip-active-storage 
   --skip-bootsnap 
   --skip-bundle 
-  --skip-git
-  --skip-javascript 
+  --skip-git 
   --skip-system-test 
   --skip-test 
-  --skip-turbolinks
   --asset-pipeline=propshaft
   --skip-active-record
 EOF
@@ -29,10 +27,12 @@ COPY <<-"EOF" /tmp/template.rb
   route "root to: 'home#index'"
   environment "config.web_console.whitelisted_ips = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']", env: 'development'
 
-  gem 'lograge'
-  gem 'logstash-event'
-  gem 'logstash-logger'
+  gem "lograge"
+  gem "logstash-event"
+  gem "logstash-logger"
+  gem "meta-tags"
   gem "rufus-scheduler"
+  gem "sitemap_generator"
 
   gem_group :test do
     gem "selenium-webdriver"
@@ -44,8 +44,8 @@ COPY <<-"EOF" /tmp/template.rb
 
   gem_group :development do
     gem "rack-mini-profiler", require: false
-    gem 'memory_profiler'
-    gem 'stackprof'
+    gem "memory_profiler"
+    gem "stackprof"
 
     gem "brakeman"
     gem "bundler-audit"
