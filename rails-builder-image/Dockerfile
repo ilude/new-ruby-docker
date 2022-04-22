@@ -22,7 +22,6 @@ COPY <<-"EOF" /tmp/options
   --skip-turbolinks
   --asset-pipeline=propshaft
   --skip-active-record
-  #--database=sqlserver 
 EOF
 
 # https://guides.rubyonrails.org/rails_application_templates.html
