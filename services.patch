@@ -1,0 +1,374 @@
+diff --git a/README.md b/README.md
+index 648798b..9735ca6 100644
+--- a/README.md
++++ b/README.md
+@@ -29,4 +29,6 @@ open a browser and go to [http://localhost:3000/](http://localhost:3000/)
+ 
+ There is also a [sqlserver git branch](https://github.com/ilude/new-ruby-docker/tree/sqlserver) that will build a project that can use Microsoft Sql Server database
+ 
+-and a [services git branch](https://github.com/ilude/new-ruby-docker/tree/services) that includes a more full featured rails project that includes redis,sidekiq,memcache
++and a [services git branch](https://github.com/ilude/new-ruby-docker/tree/services) that includes a more full featured rails project that includes [redis](https://github.com/redis/redis-rb),[sidekiq](https://github.com/mperham/sidekiq/wiki),[memcached](https://github.com/petergoldstein/dalli)
++
++The [full git branch](https://github.com/ilude/new-ruby-docker/tree/full) generates a full rails project only skipping bundle and git initialization, but does not include additional services at this time. 
+diff --git a/build.ps1 b/build.ps1
+index eb992ad..99955fe 100644
+--- a/build.ps1
++++ b/build.ps1
+@@ -63,7 +63,6 @@ docker build -t rails-project-builder ./rails-builder-image/
+ docker run --rm -it -v ${rails_base_path}:/app  --user ${uid}:${gid} rails-project-builder
+ 
+ Copy-Item -Path './templates/*file' -Destination $project_path
+-Copy-Item -Path './templates/docker-compose.override.yml' -Destination $project_path
+ Copy-Item -Path './templates/compose' -Destination $project_path -Recurse -Force
+ Copy-Item -Path './templates/dotfiles/*' -Destination $project_path
+ Copy-Item -Path './templates/.vscode/*' -Destination $vscode_path 
+diff --git a/notes.md b/notes.md
+index e69de29..aaf6022 100644
+--- a/notes.md
++++ b/notes.md
+@@ -0,0 +1,3 @@
++https://github.com/ackama/rails-template
++
++https://github.com/jfroom/docker-compose-rails-selenium-example
+\ No newline at end of file
+diff --git a/rails-builder-image/Dockerfile b/rails-builder-image/Dockerfile
+index c73f272..94ef06d 100644
+--- a/rails-builder-image/Dockerfile
++++ b/rails-builder-image/Dockerfile
+@@ -15,11 +15,9 @@ COPY <<-"EOF" /tmp/options
+   --skip-active-storage 
+   --skip-bootsnap 
+   --skip-bundle 
+-  --skip-git
+-  --skip-javascript 
++  --skip-git 
+   --skip-system-test 
+   --skip-test 
+-  --skip-turbolinks
+   --asset-pipeline=propshaft
+   --skip-active-record
+ EOF
+@@ -29,23 +27,12 @@ COPY <<-"EOF" /tmp/template.rb
+   route "root to: 'home#index'"
+   environment "config.web_console.whitelisted_ips = ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']", env: 'development'
+ 
+-  gem 'lograge'
+-  gem 'logstash-event'
+-  gem 'logstash-logger'
++  gem "lograge"
++  gem "logstash-event"
++  gem "logstash-logger"
++  gem "meta-tags"
+   gem "rufus-scheduler"
+-
+-  gem 'foreman'
+-  gem 'sidekiq'
+-  gem 'sidekiq-failures'
+-  gem 'sidekiq-status'
+-  gem 'attentive_sidekiq'
+-
+-  # memcache - https://github.com/petergoldstein/dalli
+-  gem 'dalli'
+-  gem 'connection_pool'
+-
+-  gem 'redis', '~> 3.0'
+-  gem 'redis-session-store'
++  gem "sitemap_generator"
+ 
+   gem_group :test do
+     gem "selenium-webdriver"
+@@ -57,8 +44,8 @@ COPY <<-"EOF" /tmp/template.rb
+ 
+   gem_group :development do
+     gem "rack-mini-profiler", require: false
+-    gem 'memory_profiler'
+-    gem 'stackprof'
++    gem "memory_profiler"
++    gem "stackprof"
+ 
+     gem "brakeman"
+     gem "bundler-audit"
+diff --git a/templates/Dockerfile b/templates/Dockerfile
+index 4c02ffc..d203cf8 100644
+--- a/templates/Dockerfile
++++ b/templates/Dockerfile
+@@ -54,12 +54,6 @@ if [ -z ${RAILS_EMAIL_OVERRIDE} ] && [ "$RAILS_ENV" == "development" ]; then
+     exit 1; 
+ fi
+ 
+-if [[ "$@" == *"puma"* ]] || [[ "$@" == *"foreman"* ]] || [[ "$@" == *"guard"* ]] || [[ "$@" == *"webrick"* ]]; then
+-    echo "Waiting for Redis to start..."
+-    while ! nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379}; do sleep 0.1; done
+-    echo "Redis is up!"
+-fi
+-
+ echo "Running: $@"
+ exec $@
+ EOF
+diff --git a/templates/Makefile b/templates/Makefile
+index d119df0..81f58c4 100644
+--- a/templates/Makefile
++++ b/templates/Makefile
+@@ -54,6 +54,11 @@ COMPOSE_FILES := ./compose/docker-compose.common.yml
+ COMPOSE_FILES += ./compose/docker-compose.proxy.${SERVICE_TYPE}.yml
+ COMPOSE_FILES += ./compose/docker-compose.$(DEPLOY_STAGE).yml
+ 
++# check if rufus is set to be enabled 
++ifeq (1, $(ENABLE_RUFUS_SCHEDULER))
++	COMPOSE_FILES += ./compose/docker-compose.rufus.yml
++endif
++
+ # get the app name from the current directory
+ export DOCKER_HOST_PATH := $(shell pwd)
+ export APP_NAME := $(notdir $(DOCKER_HOST_PATH))
+@@ -71,6 +76,7 @@ EMPTY_TARGETS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+ $(eval $(EMPTY_TARGETS):;@:)
+ 
+ up: build $(MUTAGEN_UP_TARGET)
++	-pwsh -c start "https://$(APP_HOST_NAME).$(APP_DOMAIN)"
+ 	-$(COMPOSE_COMMAND) $(FLAGS) up --force-recreate --abort-on-container-exit --remove-orphans
+ 	$(MAKE) down
+ 
+diff --git a/templates/base/Procfile b/templates/base/Procfile
+deleted file mode 100644
+index 2cd2d1b..0000000
+--- a/templates/base/Procfile
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# setup for cron-like scheduling and running sidekiq 
+-# in the same image
+-
+-scheduler: bundle exec rake scheduler
+-sidekiq: bundle exec sidekiq -C config/sidekiq.yml
+diff --git a/templates/base/app/views/home/index.html.erb b/templates/base/app/views/home/index.html.erb
+index 4c7de63..6a1ab56 100644
+--- a/templates/base/app/views/home/index.html.erb
++++ b/templates/base/app/views/home/index.html.erb
+@@ -1 +1,30 @@
+-There's no place like <%= ENV.fetch("RAILS_DEVELOPMENT_HOSTS", 'home') %>
+\ No newline at end of file
++There's no place like <%= ENV.fetch("RAILS_DEVELOPMENT_HOSTS", 'home') %>
++
++The following gems are included by default
++<ul>
++  <li><a href="https://github.com/kpumuk/meta-tags">Meta-tags</a></li>
++  <li><a href="https://github.com/jmettraux/rufus-scheduler">rufus-scheduler</a></li>
++  <li><a href="https://github.com/kjvarga/sitemap_generator">sitemap_generator</a></li>
++  <li><a href="https://github.com/MiniProfiler/rack-mini-profiler">Mini Profiler</a></li>
++  <li><a href="https://github.com/BetterErrors/better_errors">Better Errors</a></li>
++  <li><a href="https://github.com/presidentbeef/brakeman">Brakeman</a></li>
++  <li><a href="https://github.com/rubysec/bundler-audit">Bundler Audit</a></li>
++  <li><a href="https://github.com/roidrage/lograge">lograge</a></li>
++  <li><a href="https://github.com/teamcapybara/capybara">Capybara</a></li>
++  <li><a href="https://github.com/rspec/rspec-rails">rspec-rails</a></li>
++  <li><a href="https://github.com/titusfortner/webdrivers">webdrivers</a></li>
++  <li><a href="https://www.selenium.dev/documentation/webdriver/">selenium webdrivers</a></li>
++  <li><a href="https://github.com/rubocop/rubocop">rubocop</a></li>
++</ul>
++
++Gems you should probably check out:
++<ul>
++  <li><a href="https://github.com/sportngin/okcomputer">okcomputer</a></li>
++  <li><a href="https://github.com/ruby-grape/grape">grape</a></li>
++  <li><a href="https://github.com/bellycard/okcomputer-grape">okcomputer-grape</a></li>
++  <li><a href="https://github.com/ryanb/letter_opener">letter_opener</a></li>
++  <li><a href="https://github.com/rubocop/rubocop-rspec">rubocop-rspec</a></li>
++  <li><a href="https://github.com/rubocop/rubocop-rails">rubocop-rails</a></li>
++  <li><a href="https://github.com/rubocop/rubocop-performance">rubocop-performance</a></li>
++  <li><a href="https://github.com/rubocop/guard-rubocop">guard-rubocop</a></li>
++</ul>
+\ No newline at end of file
+diff --git a/templates/base/config/initializers/meta_tags.rb b/templates/base/config/initializers/meta_tags.rb
+new file mode 100644
+index 0000000..464d964
+--- /dev/null
++++ b/templates/base/config/initializers/meta_tags.rb
+@@ -0,0 +1,40 @@
++# frozen_string_literal: true
++
++# Use this setup block to configure all options available in MetaTags.
++MetaTags.configure do |config|
++  # How many characters should the title meta tag have at most. Default is 70.
++  # Set to nil or 0 to remove limits.
++  # config.title_limit = 70
++
++  # When true, site title will be truncated instead of title. Default is false.
++  # config.truncate_site_title_first = false
++
++  # Maximum length of the page description. Default is 300.
++  # Set to nil or 0 to remove limits.
++  # config.description_limit = 300
++
++  # Maximum length of the keywords meta tag. Default is 255.
++  # config.keywords_limit = 255
++
++  # Default separator for keywords meta tag (used when an Array passed with
++  # the list of keywords). Default is ", ".
++  # config.keywords_separator = ', '
++
++  # When true, keywords will be converted to lowercase, otherwise they will
++  # appear on the page as is. Default is true.
++  # config.keywords_lowercase = true
++
++  # When true, the output will not include new line characters between meta tags.
++  # Default is false.
++  # config.minify_output = false
++
++  # When false, generated meta tags will be self-closing (<meta ... />) instead
++  # of open (`<meta ...>`). Default is true.
++  # config.open_meta_tags = true
++
++  # List of additional meta tags that should use "property" attribute instead
++  # of "name" attribute in <meta> tags.
++  # config.property_tags.push(
++  #   'x-hearthstone:deck',
++  # )
++end
+diff --git a/templates/base/config/initializers/session_store.rb b/templates/base/config/initializers/session_store.rb
+deleted file mode 100644
+index 7d64b86..0000000
+--- a/templates/base/config/initializers/session_store.rb
++++ /dev/null
+@@ -1,9 +0,0 @@
+-
+-# Use Redis as the session store:
+-Rails.application.config.session_store :redis_session_store, 
+-  key: "_#{ENV.fetch('APP_NAME', 'app')}_session",
+-  redis: {
+-    expire_after: 120.minutes,
+-    key_prefix: "#{ENV.fetch('APP_NAME', 'app')}:session:",
+-    url: "redis://#{ENV.fetch('REDIS_HOST', 'redis')}:#{ENV.fetch('REDIS_PORT', '6379')}/data/session"
+-  }
+diff --git a/templates/base/config/initializers/sidekiq.rb b/templates/base/config/initializers/sidekiq.rb
+deleted file mode 100644
+index fdc0668..0000000
+--- a/templates/base/config/initializers/sidekiq.rb
++++ /dev/null
+@@ -1,33 +0,0 @@
+-require 'sidekiq/api'
+-require 'sidekiq-status'
+-require 'sidekiq/web'
+-require 'sidekiq-status/web'
+-
+-Sidekiq::Web.app_url = '/'
+-
+-Sidekiq::Logging.logger.level = Logger.const_get( ENV.fetch("SIDEKIQ_LOG_LEVEL", "INFO") )
+-
+-redis_url = "redis://#{ENV.fetch('REDIS_HOST', 'redis')}:#{ENV.fetch('REDIS_PORT', '6379')}/0"
+-
+-Sidekiq.configure_server do |config|
+-  config.redis = {url: redis_url}
+-
+-  Sidekiq::Status.configure_server_middleware config, expiration: 30.minutes
+-  Sidekiq::Status.configure_client_middleware config, expiration: 30.minutes
+-
+-  config.server_middleware do |chain|
+-    chain.add AttentiveSidekiq::Middleware::Server::Attentionist
+-  end
+-end
+-
+-Sidekiq.configure_client do |config|
+-  config.redis = {url: redis_url}
+-  
+-  Sidekiq::Status.configure_client_middleware config, expiration: 30.minutes
+-end
+-
+-# https://github.com/mperham/sidekiq/issues/2555
+-Sidekiq::Web.class_eval do
+-  disable :sessions
+-end
+-Sidekiq::Web.disable :sessions
+\ No newline at end of file
+diff --git a/templates/base/config/sidekiq.yml b/templates/base/config/sidekiq.yml
+deleted file mode 100644
+index eb721c8..0000000
+--- a/templates/base/config/sidekiq.yml
++++ /dev/null
+@@ -1,7 +0,0 @@
+----
+-# https://github.com/mperham/sidekiq/wiki/Advanced-Options
+-:concurrency: 1
+-:queues:
+-  - critical
+-  - default
+-  - mailers
+diff --git a/templates/compose/docker-compose.rufus.yml b/templates/compose/docker-compose.rufus.yml
+new file mode 100644
+index 0000000..130b36a
+--- /dev/null
++++ b/templates/compose/docker-compose.rufus.yml
+@@ -0,0 +1,7 @@
++  scheduler:
++    <<: *app-default
++    image: ilude/${APP_NAME}-scheduler
++    container_name: ${APP_NAME}-scheduler 
++    hostname: ${APP_NAME}-scheduler 
++    command: bundle exec rake scheduler
++
+diff --git a/templates/docker-compose.override.yml b/templates/docker-compose.override.yml
+deleted file mode 100644
+index ba831c8..0000000
+--- a/templates/docker-compose.override.yml
++++ /dev/null
+@@ -1,47 +0,0 @@
+-version: "3.8"
+-services:
+-  app:
+-    networks:
+-      - default
+-    depends_on:
+-      - redis
+-      - memcached
+-
+-  sidekiq:
+-    image: ${DOCKER_NAMESPACE:-ilude}/${APP_NAME}-${DEPLOY_STAGE:-production}
+-    container_name: ${APP_NAME}-sidekiq
+-    command: foreman start
+-    networks:
+-      - default
+-    depends_on:
+-      - redis
+-    environment:
+-      - MALLOC_ARENA_MAX=2 # https://www.mikeperham.com/2018/04/25/taming-rails-memory-bloat/
+-
+-  redis:
+-    image: bitnami/redis
+-    hostname: redis
+-    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+-    mem_limit: 1g
+-    command: /opt/bitnami/scripts/redis/run.sh --loglevel ${REDIS_LOG_LEVEL:-notice}
+-    networks:
+-      - default
+-    environment:
+-      - ALLOW_EMPTY_PASSWORD=yes
+-    volumes:
+-      - redis:/bitnami
+-  
+-  memcached:
+-    image: bitnami/memcached
+-    restart: ${DOCKER_RESTART_POLICY:-unless-stopped}
+-    mem_limit: 200m
+-    networks:
+-      - default
+-
+-networks:
+-  default:
+-
+-volumes:
+-  redis:
+-    external: false # false means docker compose will control its creation
+-  
+diff --git a/templates/dotfiles/.env.sample b/templates/dotfiles/.env.sample
+index 0ab43cf..ef9dde7 100644
+--- a/templates/dotfiles/.env.sample
++++ b/templates/dotfiles/.env.sample
+@@ -1,5 +1,4 @@
+ #DOCKER_NAMESPACE=rammount
+ #DOCKER_ENTRYPOINT_DEBUG=1
+-#SIDEKIQ_LOG_LEVEL=DEBUG
+-#DISABLE_MUTAGEN=1
+-#REDIS_LOG_LEVEL=warning
+\ No newline at end of file
++#ENABLE_RUFUS_SCHEDULER=1
++#DISABLE_MUTAGEN=1
+\ No newline at end of file
