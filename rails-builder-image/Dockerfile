@@ -19,7 +19,7 @@ COPY <<-"EOF" /tmp/options
   --skip-system-test 
   --skip-test 
   --asset-pipeline=propshaft
-  --skip-active-record
+  --database=sqlserver 
 EOF
 
 # https://guides.rubyonrails.org/rails_application_templates.html
@@ -32,6 +32,10 @@ COPY <<-"EOF" /tmp/template.rb
   gem "logstash-logger"
   gem "meta-tags"
   gem "rufus-scheduler"
+  gem "tiny_tds"
+  gem "composite_primary_keys"
+  gem "activerecord-sqlserver-adapter"
+  gem "activerecord-nulldb-adapter"
   gem "sitemap_generator"
 
   gem_group :test do
@@ -44,6 +48,8 @@ COPY <<-"EOF" /tmp/template.rb
 
   gem_group :development do
     gem "rack-mini-profiler", require: false
+    gem 'memory_profiler'
+    gem 'stackprof'
     gem "memory_profiler"
     gem "stackprof"
 
