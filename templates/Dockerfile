@@ -54,6 +54,12 @@ if [ -z ${RAILS_EMAIL_OVERRIDE} ] && [ "$RAILS_ENV" == "development" ]; then
     exit 1; 
 fi
 
+if [[ "$@" == *"puma"* ]] || [[ "$@" == *"foreman"* ]] || [[ "$@" == *"guard"* ]] || [[ "$@" == *"webrick"* ]]; then
+    echo "Waiting for Redis to start..."
+    while ! nc -z ${REDIS_HOST:-redis} ${REDIS_PORT:-6379}; do sleep 0.1; done
+    echo "Redis is up!"
+fi
+
 echo "Running: $@"
 exec $@
 EOF

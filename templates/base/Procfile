@@ -1,0 +1,5 @@
+# setup for cron-like scheduling and running sidekiq 
+# in the same image
+
+scheduler: bundle exec rake scheduler
+sidekiq: bundle exec sidekiq -C config/sidekiq.yml

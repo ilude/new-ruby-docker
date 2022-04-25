@@ -1,7 +1,0 @@
-  scheduler:
-    <<: *app-default
-    image: ilude/${APP_NAME}-scheduler
-    container_name: ${APP_NAME}-scheduler 
-    hostname: ${APP_NAME}-scheduler 
-    command: bundle exec rake scheduler
-

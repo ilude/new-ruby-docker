@@ -34,6 +34,19 @@ COPY <<-"EOF" /tmp/template.rb
   gem "rufus-scheduler"
   gem "sitemap_generator"
 
+  gem 'foreman'
+  gem 'sidekiq'
+  gem 'sidekiq-failures'
+  gem 'sidekiq-status'
+  gem 'attentive_sidekiq'
+
+  # memcache - https://github.com/petergoldstein/dalli
+  gem 'dalli'
+  gem 'connection_pool'
+
+  gem 'redis', '~> 3.0'
+  gem 'redis-session-store'
+
   gem_group :test do
     gem "selenium-webdriver"
     gem "capybara"

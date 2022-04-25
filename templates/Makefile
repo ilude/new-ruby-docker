@@ -54,11 +54,6 @@ COMPOSE_FILES := ./compose/docker-compose.common.yml
 COMPOSE_FILES += ./compose/docker-compose.proxy.${SERVICE_TYPE}.yml
 COMPOSE_FILES += ./compose/docker-compose.$(DEPLOY_STAGE).yml
 
-# check if rufus is set to be enabled 
-ifeq (1, $(ENABLE_RUFUS_SCHEDULER))
-	COMPOSE_FILES += ./compose/docker-compose.rufus.yml
-endif
-
 # get the app name from the current directory
 export DOCKER_HOST_PATH := $(shell pwd)
 export APP_NAME := $(notdir $(DOCKER_HOST_PATH))

@@ -1,0 +1,7 @@
+---
+# https://github.com/mperham/sidekiq/wiki/Advanced-Options
+:concurrency: 1
+:queues:
+  - critical
+  - default
+  - mailers
