@@ -61,8 +61,8 @@ endif
 
 # get the app name from the current directory
 export DOCKER_HOST_PATH := $(shell pwd)
-export APP_NAME := $(notdir $(DOCKER_HOST_PATH))
-export APP_DOMAIN := $(or $(shell hostname -d 2>/dev/null), $(or $(DOCKER_NAMESPACE), ilude).com)
+export APP_NAME := $(or $(APP_NAME), $(notdir $(DOCKER_HOST_PATH)))
+export APP_DOMAIN := $(or $(APP_DOMAIN), $(shell hostname -d 2>/dev/null), $(or $(DOCKER_NAMESPACE), ilude).com)
 ifeq (development, $(DEPLOY_STAGE))
 	export ATTACH_HOST 		:= app
 	export APP_HOST_NAME 	:= $(APP_NAME).local
